@@ -60,5 +60,46 @@ namespace Logic
         {
             return this[pos] == null;
         }
+
+        public IEnumerable<Position> PiecePositions()
+        {
+            for (int i = 0; i < 8; i++)
+            {
+                for (int c = 0; c < 8; c++)
+                {
+                    var pos = new Position(i, c);
+
+                    if (!IsEmpty(pos))
+                    {
+                        yield return pos;
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<Position> PiecePositionsFor(Player player)
+        {
+            return PiecePositions().Where(pos => this[pos].Color == player);
+        }
+
+        public bool IsInCheck(Player player)
+        {
+            return PiecePositionsFor(player.Opponent()).Any(pos =>
+            {
+                var piece = this[pos];
+                return piece.CanCaptureOpponentKing(pos, this);
+            });
+        }
+
+        public Board Copy()
+        {
+            var copy = new Board();
+            foreach (Position pos in PiecePositions())
+            {
+                copy[pos] = this[pos].Copy();
+            }
+
+            return copy;
+        }
     }
 }

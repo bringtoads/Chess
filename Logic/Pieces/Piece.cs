@@ -37,5 +37,14 @@ namespace Logic.Pieces
         {
             return directions.SelectMany(direction => MovePositionsInDirections(from, board, direction));
         }
+
+        public virtual bool CanCaptureOpponentKing(Position from, Board board)
+        {
+            return GetMoves(from, board).Any(move =>
+            {
+                Piece piece = board[move.ToPos];
+                return piece != null && piece.Type == PieceType.King;
+            });
+        }
     }
 }

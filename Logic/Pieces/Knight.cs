@@ -34,7 +34,7 @@ namespace Logic.Pieces
 
         private IEnumerable<Position> MovePositions(Position from, Board board)
         {
-            return PotentialToPositions(from).Where(pos => Board.IsInside(pos) && (board.IsEmpty(pos)) || board[pos].Color != Color);
+           return PotentialToPositions(from).Where(pos => Board.IsInside(pos) && (board.IsEmpty(pos) || board[pos].Color != Color));       
         }
 
         public override IEnumerable<Move> GetMoves(Position from, Board board)

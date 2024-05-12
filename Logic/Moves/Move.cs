@@ -5,6 +5,16 @@
         public abstract MoveType Type { get; }
         public abstract Position FromPos { get; }
         public abstract Position ToPos { get; }
-        public abstract void Execute(Board board); 
+        
+        public abstract void Execute(Board board);
+
+        public virtual bool IsLegal(Board board)
+        {
+            //refactor -- slow af
+            Player player = board[FromPos].Color;
+            var boardCopy = board.Copy();
+            Execute(boardCopy);
+            return !boardCopy.IsInCheck(player);
+        }
     }
 }

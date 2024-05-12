@@ -1,9 +1,10 @@
 ﻿using Logic;
 using Logic.Moves;
-using System.Drawing;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Shapes;
+using System.Windows.Input;
 
 namespace UI
 {
@@ -25,9 +26,13 @@ namespace UI
             {
                 for (int j = 0; j < 8; j++)
                 {
-                    var image = new Image();
+                    Image image = new Image();
                     pieceImages[i, j] = image;
                     PieceGrid.Children.Add(image);
+
+                    Rectangle highLight = new Rectangle();
+                    highLights[i, j] = highLight;
+                    HighLightGrid.Children.Add(highLight);
                 }
             }
         }
@@ -50,11 +55,141 @@ namespace UI
             InitializeBoard();
             gameState = new GameState(Player.White, Board.Initial());
             DrawBoard(gameState.Board);
+            SetCursor(gameState.CurrentPlayer);
         }
 
-        private void BoardGrid_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private void BoardGrid_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            if (IsMenuOnScreen())
+            {
+                return;
+            }
 
+            Point point = e.GetPosition(BoardGrid);
+            Position pos = ToSquarePosition(point);
+
+            if (selectedPosition == null)
+            {
+                OnFromPositionSelected(pos);
+            }
+            else
+            {
+                OnToPositionSelected(pos);
+            }
+        }
+
+        private void OnFromPositionSelected(Position pos)
+        {
+            IEnumerable<Move> moves = gameState.LegalMovesForPiece(pos);
+
+            if (moves.Any())
+            {
+                selectedPosition = pos;
+                CacheMoves(moves);
+                ShowHighLights();
+            }
+        }
+
+        private void OnToPositionSelected(Position pos)
+        {
+            selectedPosition = null;
+            HideHighLights();
+
+            if (moveCache.TryGetValue(pos, out Move move))
+            {
+                HandleMove(move);
+            }
+        }
+
+        private void HandleMove(Move move)
+        {
+            gameState.MakeMove(move);
+            DrawBoard(gameState.Board);
+            SetCursor(gameState.CurrentPlayer);
+
+            if (gameState.IsGameOver())
+            {
+                ShowGameOver();
+            }
+        }
+
+        private Position ToSquarePosition(Point point)
+        {
+            double squareSize = BoardGrid.ActualWidth / 8;
+            int row = (int)(point.Y / squareSize);
+            int col = (int)(point.X / squareSize);
+            return new Position(row, col);
+        }
+
+        private void CacheMoves(IEnumerable<Move> moves)
+        {
+            moveCache.Clear();
+            foreach (Move move in moves)
+            {
+                moveCache[move.ToPos] = move;
+            }
+        }
+
+        private void ShowHighLights()
+        {
+            Color color = Color.FromArgb(150,125,255,125);
+
+            foreach (Position to in moveCache.Keys)
+            {
+                highLights[to.Row, to.Column].Fill = new SolidColorBrush(color);
+            }
+        }
+
+        private void HideHighLights()
+        {
+            foreach (Position to in moveCache.Keys)
+            {
+                highLights[to.Row, to.Column].Fill = Brushes.Transparent;
+            }
+        }
+
+        private void SetCursor(Player player)
+        {
+            if (player == Player.White)
+            {
+                Cursor = Cursors.WhiteCursor;
+            }
+            else
+            {
+                Cursor = Cursors.BlackCursor;
+            }
+        }
+
+        private bool IsMenuOnScreen()
+        {
+            return MenuContainer.Content != null;
+        }
+
+        private void ShowGameOver()
+        {
+            GameOverMenu gameOverMenu = new GameOverMenu(gameState);
+            MenuContainer.Content = gameOverMenu;
+            gameOverMenu.OptionSelected += option =>
+            {
+                if (option == Option.Restart)
+                {
+                    MenuContainer.Content = null;
+                    RestartGame();
+                }
+                else
+                {
+                    Application.Current.Shutdown();
+                }
+            };
+        }
+
+        private void RestartGame()
+        {
+            HideHighLights();
+            moveCache.Clear();
+            gameState = new GameState(Player.White, Board.Initial());
+            DrawBoard(gameState.Board);
+            SetCursor(gameState.CurrentPlayer);
         }
     }
 }
