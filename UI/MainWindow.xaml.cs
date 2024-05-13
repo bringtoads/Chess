@@ -13,7 +13,7 @@ namespace UI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private readonly Image[,] pieceImages = new Image[8,8];
+        private readonly Image[,] pieceImages = new Image[8, 8];
         private readonly Rectangle[,] highLights = new Rectangle[8, 8];
         private readonly Dictionary<Position, Move> moveCache = new Dictionary<Position, Move>();
 
@@ -22,7 +22,7 @@ namespace UI
 
         private void InitializeBoard()
         {
-            for (int i = 0; i < 8; i++ )
+            for (int i = 0; i < 8; i++)
             {
                 for (int j = 0; j < 8; j++)
                 {
@@ -97,8 +97,31 @@ namespace UI
 
             if (moveCache.TryGetValue(pos, out Move move))
             {
-                HandleMove(move);
+                if (move.Type == MoveType.Promotion)
+                {
+                    HandlePromotion(move.FromPos, move.ToPos);
+                }
+                else 
+                {
+                    HandleMove(move);
+                }
             }
+        }
+
+        private void HandlePromotion(Position from, Position to)
+        {
+            pieceImages[to.Row, to.Column].Source = Images.GetImage(gameState.CurrentPlayer, PieceType.Pawn);
+            pieceImages[from.Row, from.Column].Source = null;
+
+            PromotionMenu promMenu = new PromotionMenu(gameState.CurrentPlayer);
+            MenuContainer.Content = promMenu;
+
+            promMenu.PieceSelected += type =>
+            {
+                MenuContainer.Content = null;
+                Move promMove = new PawnPromotion(from, to, type);
+                HandleMove(promMove);
+            };
         }
 
         private void HandleMove(Move move)
@@ -132,7 +155,7 @@ namespace UI
 
         private void ShowHighLights()
         {
-            Color color = Color.FromArgb(150,125,255,125);
+            Color color = Color.FromArgb(150, 125, 255, 125);
 
             foreach (Position to in moveCache.Keys)
             {
