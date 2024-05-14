@@ -58,6 +58,7 @@ namespace Logic
 
         public void MakeMove(Move move)
         {
+            Board.SetPawnSkipPostion(CurrentPlayer, null);
             move.Execute(Board);
             CurrentPlayer = CurrentPlayer.Opponent();
             CheckForGameOver();
