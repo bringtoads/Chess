@@ -8,6 +8,8 @@ namespace Logic
         public Player CurrentPlayer { get; private set; }
         public Result Result { get; private set; } = null;
 
+        private int noCaptureOrPawnMoves = 0;
+
         public GameState(Player player, Board board)
         {
             CurrentPlayer = player;
@@ -53,6 +55,10 @@ namespace Logic
             {
                 Result = Result.Draw(EndReason.InsufficientMaterial);
             }
+            else if (FiftyMoveRule())
+            {
+                Result = Result.Draw(EndReason.FiftyMoveRule);
+            }
         }
 
         public bool IsGameOver()
@@ -63,9 +69,27 @@ namespace Logic
         public void MakeMove(Move move)
         {
             Board.SetPawnSkipPostion(CurrentPlayer, null);
-            move.Execute(Board);
+            bool captureOrPawn = move.Execute(Board);
+
+            if (captureOrPawn)
+            {
+                noCaptureOrPawnMoves = 0;
+            }
+            else
+            {
+                noCaptureOrPawnMoves++;
+            }
+
             CurrentPlayer = CurrentPlayer.Opponent();
             CheckForGameOver();
         }
+
+        private bool FiftyMoveRule()
+        {
+            int fullMoves = noCaptureOrPawnMoves / 2;
+            return fullMoves == 50;
+        }
+
+        
     }
 }
