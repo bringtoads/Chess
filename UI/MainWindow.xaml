@@ -9,7 +9,7 @@
         Icon="Assets/icon.ico"
         WindowStartupLocation="CenterScreen"
         Background="Black"
-        >
+        KeyDown="Window_KeyDown">
     <Viewbox>
         <Grid x:Name="BoardGrid" 
               Width="600" 
